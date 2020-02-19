@@ -7,6 +7,7 @@ const postsSchema = new Schema({
 	title: String,
 	description: String,
 	likes: [ String ],
-	comments: [ CommentSchema ]
+	comments: [ CommentSchema ],
+	postBy: Schema.Types.ObjectId
 });
 mongoose.model('posts', postsSchema);
