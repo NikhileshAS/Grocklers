@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const PRIVATE_KEY = require('../configs/keys').PRIVATE_KEY;
-
+const logger = require('../configs/logger');
 module.exports = {
 	checkAuthentication: (req, res, next) => {
 		const token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -8,9 +8,10 @@ module.exports = {
 		try {
 			const decoded = jwt.verify(token, PRIVATE_KEY);
 			req.user = decoded;
+			logger.trace('User decoded');
 			next();
 		} catch (e) {
-			console.log(e);
+			logger.error(e);
 			res.status(400).send('Invalid Token');
 		}
 	}
