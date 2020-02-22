@@ -71,6 +71,22 @@ module.exports = (app) => {
 				res.status(400).send('Incorrect EMAIL ID', err);
 			});
 	});
+	app.post('/api/addFriend', auth, async (req, res) => {
+		const user = req.user;
+		const { profileId } = req.query;
+		User.findByIdAndUpdate(user.id, { $push: { friends: profileId } })
+			.then(() => {
+				User.findByIdAndUpdate(profileId, { $push: { friends: user.id } }).then(() => {
+					logger.trace('Added Friend');
+					res.status(200).send({ message: 'Added friend' });
+				});
+			})
+			.catch((err) => {
+				logger.error('Adding friend was unsuccesful');
+				logger.error(err);
+				res.status(500).send({ message: 'Adding friend was unsuccessful', err });
+			});
+	});
 
 	//LOGOUT can't be done using JWT. Wait until the token expires or clear the token on client.
 };

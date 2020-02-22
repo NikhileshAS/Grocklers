@@ -12,6 +12,7 @@ const UserSchema = new Schema({
 	date_of_birth: Date,
 	email: { type: String, unique: true, required: true },
 	posts: [ String ],
+	friends: [ String ],
 	password: { type: String, minlength: 3, required: true },
 	isAdmin: Boolean
 });

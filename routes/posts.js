@@ -59,16 +59,27 @@ module.exports = (app) => {
 		});
 	});
 	app.get('/api/showAllPosts', auth, (req, res) => {
-		Post.find()
-			.then((posts) => {
-				logger.trace('Showing all posts');
+		const user = req.user;
+		User.findById(user.id)
+			.then(async (user) => {
+				let posts = [];
+				let fetchPosts = async () => {
+					for (let index = 0; index < user['friends'].length; index++) {
+						let friend = await User.findById(user['friends'][index]);
+						for (let index2 = 0; index2 < friend['posts'].length; index2++) {
+							posts.push(await Post.findById(friend['posts'][index2]));
+						}
+					}
+				};
+				await fetchPosts();
+				logger.trace('Posts added succesfully');
 				logger.trace(posts);
-				res.status(200).send({ message: 'All Posts', posts });
+				res.status(200).send({ message: 'Posts fetched successfully', posts });
 			})
 			.catch((err) => {
-				logger.error('Error on fetching posts');
+				logger.error("Couldn't fetch users");
 				logger.error(err);
-				res.status(500).send({ message: 'Fetching all posts failed' });
+				res.status(500).send({ message: 'Error on fetching users.', err });
 			});
 	});
 	//Get POSTID from the request
