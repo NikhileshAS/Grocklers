@@ -24,6 +24,7 @@ require('./models/profiles');
 
 require('./routes/user')(app);
 require('./routes/posts')(app);
+require('./routes/utils')(app);
 app.listen(process.env.PORT || 5000);
 app.get('/', (req, res) => {
 	res.send('Hello, World!');
