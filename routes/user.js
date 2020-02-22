@@ -46,16 +46,10 @@ module.exports = (app) => {
 				user['posts'][index] = await Posts.findById(user['posts'][index]);
 			}
 		};
-		fetchPosts()
-			.then((user) => {
-				logger.trace('Details fetched');
-				res.status(200).send({ message: 'Details fetched', user });
-			})
-			.catch((err) => {
-				logger.error('Error fetching user details');
-				logger.error(err);
-				res.status(500).send({ message: 'Error fetching user details', err });
-			});
+		await fetchPosts();
+		logger.trace('Details fetched');
+		logger.trace(user);
+		res.status(200).send({ user });
 	});
 	app.get('/api/login', async (req, res) => {
 		const { email, password } = req.query;
