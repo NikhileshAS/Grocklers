@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = mongoose.model('profiles');
+const Posts = mongoose.model('posts');
 const auth = require('../middlewares/auth').checkAuthentication;
 const PRIVATE_KEY = require('../configs/keys').PRIVATE_KEY;
 const logger = require('../configs/logger');
@@ -23,7 +24,7 @@ module.exports = (app) => {
 			.save()
 			.then(() => {
 				const token = newUser.generateAuthToken();
-				res.header('x-auth-token', token).send({
+				res.header('x-auth-token', token).status(201).send({
 					_id: newUser._id,
 					name: newUser.name,
 					email: newUser.email
@@ -32,15 +33,29 @@ module.exports = (app) => {
 			.catch((error) => {
 				logger.error(error);
 				if (error.errmsg && error.errmsg.includes('duplicate key')) {
-					res.send('Email already taken');
+					res.status(409).send('Email already taken');
 				}
-				res.send('Error caught');
+				res.status(409).send('Error caught');
 			});
 	});
 	app.get('/api/userDetails', auth, async (req, res) => {
 		logger.trace(req.user);
 		const user = await User.findById(req.user.id);
-		res.send(user);
+		let fetchPosts = async () => {
+			for (let index = 0; index < user['posts'].length; index++) {
+				user['posts'][index] = await Posts.findById(user['posts'][index]);
+			}
+		};
+		fetchPosts()
+			.then((user) => {
+				logger.trace('Details fetched');
+				res.status(200).send({ message: 'Details fetched', user });
+			})
+			.catch((err) => {
+				logger.error('Error fetching user details');
+				logger.error(err);
+				res.status(500).send({ message: 'Error fetching user details', err });
+			});
 	});
 	app.get('/api/login', async (req, res) => {
 		const { email, password } = req.query;
@@ -50,14 +65,16 @@ module.exports = (app) => {
 				const id = obj._id;
 				const isPasswordValid = await bcrypt.compare(password, db_password);
 				if (isPasswordValid) {
-					return res.send({ token: jwt.sign({ id }, PRIVATE_KEY, { expiresIn: 60 * 60 }), user: obj });
+					return res
+						.status(200)
+						.send({ token: jwt.sign({ id }, PRIVATE_KEY, { expiresIn: 60 * 60 }), user: obj });
 				} else {
-					res.send('Incorrect Password');
+					res.status(400).send('Incorrect Password');
 				}
 			})
 			.catch((err) => {
 				logger.error(err);
-				res.send('Incorrect EMAIL ID');
+				res.status(400).send('Incorrect EMAIL ID', err);
 			});
 	});
 

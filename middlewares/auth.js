@@ -12,7 +12,7 @@ module.exports = {
 			next();
 		} catch (e) {
 			logger.error(e);
-			res.status(400).send('Invalid Token');
+			res.status(401).send({ message: 'Invalid Token', e });
 		}
 	}
 };

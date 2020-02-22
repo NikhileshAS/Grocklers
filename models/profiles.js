@@ -11,7 +11,7 @@ const UserSchema = new Schema({
 	gender: String,
 	date_of_birth: Date,
 	email: { type: String, unique: true, required: true },
-	posts: [ PostsSchema ],
+	posts: [ String ],
 	password: { type: String, minlength: 3, required: true },
 	isAdmin: Boolean
 });
