@@ -7,6 +7,7 @@ const cookieKey = require('./configs/keys').COOKIE_KEY;
 const logger = require('./configs/logger');
 const app = express();
 app.use(cors());
+app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.json());
 app.use(cookieSession({ maxAge: 30 * 24 * 60 * 60 * 1000, keys: [ cookieKey ] }));
 

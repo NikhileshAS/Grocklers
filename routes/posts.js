@@ -1,25 +1,53 @@
+const fs = require('fs');
 const mongoose = require('mongoose');
+const multer = require('multer');
 const User = mongoose.model('profiles');
 const Post = mongoose.model('posts');
 const Comment = mongoose.model('comment');
 const auth = require('../middlewares/auth').checkAuthentication;
 const logger = require('../configs/logger');
 
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, './uploads/');
+	},
+	filename: (req, file, cb) => {
+		var fileType = '.' + file.originalname.split('.')[1];
+		var fileName = new String(Math.random() * Date.now()).split('.');
+		file.originalname = fileName[0] + fileName[1] + fileType;
+		cb(null, file.originalname);
+	}
+});
+
+const fileFilter = (req, file, cb) => {
+	if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+		cb(null, true);
+	} else cb(null, false);
+};
+const upload = multer({
+	storage,
+	limits: {
+		fileSize: 1024 * 1024 * 5
+	},
+	fileFilter
+});
 module.exports = (app) => {
-	app.post('/api/addPost', auth, (req, res) => {
+	app.post('/api/addPost', upload.single('postImage'), auth, (req, res) => {
 		const { title, description } = req.query;
 		const user = req.user;
 		new Post({
 			title,
 			description,
-			postBy: user.id
+			postBy: user.id,
+			postImage: req.file.path.replace(/\\/g, '/')
 		})
 			.save()
 			.then((post) => {
+				console.log(post);
 				logger.trace(post);
 				User.findByIdAndUpdate(user.id, { $push: { posts: post._id } })
 					.then((user) => {
-						logger.trace(user);
+						logger.trace('post added successfully', user);
 						res.status(200).send({ message: 'Post added successfully', user: post });
 					})
 					.catch((err) => {
@@ -72,7 +100,7 @@ module.exports = (app) => {
 					}
 				};
 				await fetchPosts();
-				logger.trace('Posts added succesfully');
+				logger.trace('Posts fetched succesfully');
 				logger.trace(posts);
 				res.status(200).send({ message: 'Posts fetched successfully', posts });
 			})
